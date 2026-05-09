@@ -24,6 +24,10 @@ from pathlib import Path
 
 CONFIG_FILE = Path(__file__).parent / "config.json"
 
+# 摘要生成ルールファイル（将来的な拡張用）
+# vendor_rules.json が存在すれば追加ルールとして読み込む
+VENDOR_RULES_FILE = Path(__file__).parent / "vendor_rules.json"
+
 
 # ========== 設定 ==========
 
@@ -322,6 +326,153 @@ def build_filename(info: dict, original_suffix: str) -> str:
     return "_".join(parts) + original_suffix
 
 
+# ========== 摘要生成 ==========
+
+# 組み込みルール定義
+# 将来的に vendor_rules.json へ切り出して外部管理できる構造にしています。
+# 各ルールは {"keywords": [...], "content": "摘要名"} の形式です。
+_BUILTIN_RULES: list[dict] = [
+    {
+        "keywords": ["hotel", "hyatt", "hilton", "marriott", "inn", "resort",
+                     "宿泊", "ホテル", "旅館"],
+        "content": "宿泊費",
+    },
+    {
+        "keywords": ["grab", "taxi", "uber", "lyft", "gojek", "mrtライド",
+                     "交通", "タクシー", "電車", "バス", "新幹線", "airfare",
+                     "airline", "flight", "airways"],
+        "content": "交通費",
+    },
+    {
+        "keywords": ["restaurant", "cafe", "coffee", "starbucks", "mcdonald",
+                     "subway", "pizza", "sushi", "ramen", "izakaya",
+                     "飲食", "食事", "ランチ", "ディナー", "居酒屋", "レストラン",
+                     "カフェ", "コーヒー"],
+        "content": "飲食代",
+    },
+    {
+        "keywords": ["openai", "chatgpt", "anthropic", "aws", "amazon web",
+                     "google cloud", "gcp", "azure", "microsoft 365",
+                     "github", "heroku", "cloudflare", "datadog", "stripe",
+                     "subscription", "cloud", "saas", "paas", "iaas",
+                     "クラウド", "サブスクリプション"],
+        "content": "クラウドサービス利用料",
+    },
+    {
+        "keywords": ["monitor", "keyboard", "mouse", "pc", "laptop", "printer",
+                     "scanner", "headphone", "webcam", "cable", "usb",
+                     "備品", "消耗品", "文房具", "パソコン", "モニター",
+                     "キーボード", "マウス", "プリンター"],
+        "content": "備品購入",
+    },
+    {
+        "keywords": ["book", "seminar", "conference", "training", "course",
+                     "書籍", "セミナー", "研修", "勉強会", "学会"],
+        "content": "教育研修費",
+    },
+    {
+        "keywords": ["advertisement", "advertising", "ad ", "ads", "marketing",
+                     "広告", "宣伝", "マーケティング"],
+        "content": "広告宣伝費",
+    },
+    {
+        "keywords": ["delivery", "shipping", "fedex", "dhl", "ups", "yamato",
+                     "sagawa", "japan post", "ヤマト", "佐川", "郵便", "宅配",
+                     "配送", "送料"],
+        "content": "送料",
+    },
+]
+
+
+def _load_vendor_rules() -> list[dict]:
+    """
+    vendor_rules.json が存在すれば追加ルールとして読み込む。
+
+    ファイル形式の例:
+    [
+      {"keywords": ["acme", "acme corp"], "content": "ソフトウェアライセンス料"},
+      {"keywords": ["cleaners", "cleaning"], "content": "清掃費"}
+    ]
+
+    このファイルが存在しない場合は空リストを返す（エラーにしない）。
+    """
+    if not VENDOR_RULES_FILE.exists():
+        return []
+    try:
+        with open(VENDOR_RULES_FILE, encoding="utf-8") as f:
+            rules = json.load(f)
+        if isinstance(rules, list):
+            return rules
+    except Exception:
+        pass
+    return []
+
+
+def _match_rules(lower_text: str, rules: list[dict]) -> str:
+    """
+    ルールリストに対してテキストをマッチングし、最初にヒットした摘要名を返す。
+    ヒットしなければ空文字を返す。
+    """
+    for rule in rules:
+        keywords = rule.get("keywords", [])
+        content  = rule.get("content", "")
+        if content and any(kw.lower() in lower_text for kw in keywords):
+            return content
+    return ""
+
+
+def generate_description(info: dict, text: str) -> str:
+    """
+    OCR抽出テキストと parse_document() の解析結果から経理入力用の摘要案を生成する。
+
+    摘要形式:
+      取引先／内容／国内取引
+      取引先／内容／海外取引
+
+    判定優先順位:
+      1. vendor_rules.json のカスタムルール（存在する場合）
+      2. 組み込みルール（_BUILTIN_RULES）
+      3. 書類種別フォールバック（請求書 / Invoice → "請求書"）
+      4. デフォルト → "経費"
+
+    Parameters
+    ----------
+    info : dict
+        parse_document() の返却値
+    text : str
+        OCRで抽出した生テキスト
+
+    Returns
+    -------
+    str
+        摘要案文字列（例: "Grab／交通費／海外取引"）
+    """
+    company     = info.get("company") or "取引先不明"
+    doc_type    = info.get("doc_type") or ""
+    is_domestic = info.get("is_domestic", True)
+    lower_text  = text.lower()
+
+    # 1. カスタムルール（vendor_rules.json）を優先
+    vendor_rules = _load_vendor_rules()
+    content = _match_rules(lower_text, vendor_rules)
+
+    # 2. 組み込みルール
+    if not content:
+        content = _match_rules(lower_text, _BUILTIN_RULES)
+
+    # 3. 書類種別フォールバック
+    if not content:
+        if doc_type in ("請求書", "Invoice"):
+            content = "請求書"
+        elif doc_type in ("領収書", "Receipt"):
+            content = "経費"
+        else:
+            content = "経費"
+
+    tax_hint = "国内取引" if is_domestic else "海外取引"
+    return f"{company}／{content}／{tax_hint}"
+
+
 # ========== メイン処理 ==========
 
 def process_file(file_path_str: str) -> tuple[bool, str]:
@@ -340,9 +491,10 @@ def process_file(file_path_str: str) -> tuple[bool, str]:
     if not text.strip():
         return False, "テキストを抽出できませんでした（画像が低解像度すぎる可能性があります）"
 
-    info = parse_document(text)
-    new_name = build_filename(info, file_path.suffix)
-    new_path = file_path.parent / new_name
+    info        = parse_document(text)
+    description = generate_description(info, text)
+    new_name    = build_filename(info, file_path.suffix)
+    new_path    = file_path.parent / new_name
 
     # 同名ファイルが存在する場合は連番
     if new_path.exists() and new_path != file_path:
@@ -357,7 +509,7 @@ def process_file(file_path_str: str) -> tuple[bool, str]:
     except Exception as e:
         return False, f"リネーム失敗: {e}"
 
-    return True, f"{file_path.name}\n  → {new_path.name}"
+    return True, f"{file_path.name}\n  → {new_path.name}\n  摘要案：{description}"
 
 
 def show_result_dialog(title: str, message: str):
