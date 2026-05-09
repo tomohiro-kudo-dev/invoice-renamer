@@ -332,54 +332,252 @@ def build_filename(info: dict, original_suffix: str) -> str:
 # 将来的に vendor_rules.json へ切り出して外部管理できる構造にしています。
 # 各ルールは {"keywords": [...], "content": "摘要名"} の形式です。
 _BUILTIN_RULES: list[dict] = [
+    # ------------------------------------------------------------------
+    # 旅費交通費：宿泊
+    # ------------------------------------------------------------------
     {
-        "keywords": ["hotel", "hyatt", "hilton", "marriott", "inn", "resort",
-                     "宿泊", "ホテル", "旅館"],
+        "keywords": [
+            "hotel", "hyatt", "hilton", "marriott", "sheraton", "westin",
+            "apa", "dormy inn", "toyoko inn", "東横イン", "ルートイン",
+            "inn", "resort", "lodge",
+            "宿泊", "ホテル", "旅館", "民宿",
+        ],
         "content": "宿泊費",
     },
+    # ------------------------------------------------------------------
+    # 旅費交通費：交通
+    # ------------------------------------------------------------------
     {
-        "keywords": ["grab", "taxi", "uber", "lyft", "gojek", "mrtライド",
-                     "交通", "タクシー", "電車", "バス", "新幹線", "airfare",
-                     "airline", "flight", "airways"],
-        "content": "交通費",
+        "keywords": [
+            "taxi", "タクシー", "cab",
+            "uber", "grab", "lyft", "didi", "go タクシー",
+            "jr ", "新幹線", "特急", "乗車券", "定期券", "suica", "pasmo",
+            "東京メトロ", "都営", "私鉄", "近鉄", "阪急", "阪神", "京急",
+            "バス", "高速バス", "路線バス",
+            "airfare", "airline", "flight", "airways", "ana ", "jal ",
+            "駐車場", "パーキング", "高速料金", "etc ",
+            "旅費", "交通費",
+        ],
+        "content": "旅費交通費",
     },
+    # ------------------------------------------------------------------
+    # 接待交際費
+    # ------------------------------------------------------------------
     {
-        "keywords": ["restaurant", "cafe", "coffee", "starbucks", "mcdonald",
-                     "subway", "pizza", "sushi", "ramen", "izakaya",
-                     "飲食", "食事", "ランチ", "ディナー", "居酒屋", "レストラン",
-                     "カフェ", "コーヒー"],
-        "content": "飲食代",
+        "keywords": [
+            "接待", "交際", "手土産", "ご祝儀", "御祝", "お中元", "お歳暮",
+            "冠婚葬祭", "香典", "祝儀",
+            "golf", "ゴルフ", "ゴルフ場",
+            "クラブ", "バー", "bar ", "ラウンジ", "lounge",
+        ],
+        "content": "接待交際費",
     },
+    # ------------------------------------------------------------------
+    # 会議費・飲食
+    # ------------------------------------------------------------------
     {
-        "keywords": ["openai", "chatgpt", "anthropic", "aws", "amazon web",
-                     "google cloud", "gcp", "azure", "microsoft 365",
-                     "github", "heroku", "cloudflare", "datadog", "stripe",
-                     "subscription", "cloud", "saas", "paas", "iaas",
-                     "クラウド", "サブスクリプション"],
-        "content": "クラウドサービス利用料",
+        "keywords": [
+            "restaurant", "レストラン", "食堂", "定食",
+            "cafe", "カフェ", "coffee", "コーヒー", "スターバックス", "starbucks",
+            "ドトール", "コメダ", "タリーズ",
+            "pizza", "ピザ", "sushi", "寿司", "ramen", "ラーメン",
+            "居酒屋", "izakaya", "焼肉", "しゃぶしゃぶ", "天ぷら",
+            "弁当", "仕出し", "ケータリング", "catering",
+            "会議費", "昼食", "ランチ", "ディナー", "飲食", "食事",
+        ],
+        "content": "会議費",
     },
+    # ------------------------------------------------------------------
+    # 通信費
+    # ------------------------------------------------------------------
     {
-        "keywords": ["monitor", "keyboard", "mouse", "pc", "laptop", "printer",
-                     "scanner", "headphone", "webcam", "cable", "usb",
-                     "備品", "消耗品", "文房具", "パソコン", "モニター",
-                     "キーボード", "マウス", "プリンター"],
-        "content": "備品購入",
+        "keywords": [
+            "ntt", "docomo", "ドコモ", "au ", "kddi", "softbank", "ソフトバンク",
+            "rakuten mobile", "楽天モバイル", "iijmio", "mineo",
+            "インターネット", "光回線", "フレッツ", "wi-fi", "wifi",
+            "電話", "携帯", "スマートフォン", "スマホ", "通話料",
+            "zoom", "slack", "chatwork", "teams", "line works",
+            "通信費", "回線",
+        ],
+        "content": "通信費",
     },
+    # ------------------------------------------------------------------
+    # 水道光熱費
+    # ------------------------------------------------------------------
     {
-        "keywords": ["book", "seminar", "conference", "training", "course",
-                     "書籍", "セミナー", "研修", "勉強会", "学会"],
-        "content": "教育研修費",
+        "keywords": [
+            "東京電力", "関西電力", "中部電力", "九州電力", "東北電力",
+            "電力", "電気料金", "電気代",
+            "東京ガス", "大阪ガス", "東邦ガス", "ガス料金", "ガス代",
+            "水道", "上下水道", "水道料金",
+            "電気", "ガス", "光熱費",
+        ],
+        "content": "水道光熱費",
     },
+    # ------------------------------------------------------------------
+    # 地代家賃
+    # ------------------------------------------------------------------
     {
-        "keywords": ["advertisement", "advertising", "ad ", "ads", "marketing",
-                     "広告", "宣伝", "マーケティング"],
+        "keywords": [
+            "家賃", "賃料", "地代", "賃貸", "テナント",
+            "管理費", "共益費", "駐車場代", "月極",
+            "rent", "lease",
+        ],
+        "content": "地代家賃",
+    },
+    # ------------------------------------------------------------------
+    # 保険料
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "保険料", "保険", "損保", "生命保険", "火災保険", "自動車保険",
+            "損害保険", "東京海上", "損保ジャパン", "三井住友海上",
+            "あいおいニッセイ", "共済",
+            "insurance",
+        ],
+        "content": "保険料",
+    },
+    # ------------------------------------------------------------------
+    # 消耗品費
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "コンビニ", "セブンイレブン", "ファミリーマート", "ローソン",
+            "文房具", "コピー用紙", "トナー", "インク", "インクカートリッジ",
+            "ボールペン", "ノート", "封筒", "クリアファイル",
+            "洗剤", "清掃用品", "ゴミ袋", "トイレットペーパー",
+            "コーヒー豆", "お茶", "飲料水", "ウォーターサーバー",
+            "消耗品", "雑費",
+        ],
+        "content": "消耗品費",
+    },
+    # ------------------------------------------------------------------
+    # 備品・器具費（単価10万円未満の物品）
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "monitor", "モニター", "ディスプレイ",
+            "keyboard", "キーボード", "mouse", "マウス",
+            "pc", "パソコン", "laptop", "ノートpc", "タブレット",
+            "printer", "プリンター", "scanner", "スキャナー",
+            "headphone", "ヘッドフォン", "webcam", "ウェブカメラ",
+            "hard disk", "hdd", "ssd", "usb", "ケーブル",
+            "椅子", "デスク", "チェア", "シュレッダー",
+            "備品",
+        ],
+        "content": "備品費",
+    },
+    # ------------------------------------------------------------------
+    # 修繕費
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "修理", "修繕", "メンテナンス", "保守", "点検",
+            "オーバーホール", "部品交換", "補修",
+            "repair", "maintenance",
+        ],
+        "content": "修繕費",
+    },
+    # ------------------------------------------------------------------
+    # 外注費・業務委託
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "外注", "業務委託", "委託", "請負", "下請",
+            "コンサルティング", "コンサル", "consulting",
+            "システム開発", "web制作", "デザイン料", "翻訳",
+            "outsourcing", "freelance", "フリーランス",
+        ],
+        "content": "外注費",
+    },
+    # ------------------------------------------------------------------
+    # 広告宣伝費
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "広告", "宣伝", "チラシ", "パンフレット", "カタログ",
+            "名刺", "印刷", "デザイン",
+            "google ads", "yahoo広告", "facebook ads", "instagram",
+            "advertisement", "advertising", "marketing", "マーケティング",
+            "pr ", "プレスリリース",
+        ],
         "content": "広告宣伝費",
     },
+    # ------------------------------------------------------------------
+    # 新聞図書費
+    # ------------------------------------------------------------------
     {
-        "keywords": ["delivery", "shipping", "fedex", "dhl", "ups", "yamato",
-                     "sagawa", "japan post", "ヤマト", "佐川", "郵便", "宅配",
-                     "配送", "送料"],
-        "content": "送料",
+        "keywords": [
+            "書籍", "本", "雑誌", "新聞", "日経", "朝日新聞", "読売新聞",
+            "日本経済新聞", "週刊", "月刊",
+            "amazon", "kindle", "楽天ブックス",
+            "book", "magazine", "newspaper",
+            "図書", "電子書籍",
+        ],
+        "content": "新聞図書費",
+    },
+    # ------------------------------------------------------------------
+    # 教育研修費
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "セミナー", "研修", "勉強会", "講習", "資格",
+            "eラーニング", "オンライン講座", "udemy", "schoo",
+            "学会", "conference", "seminar", "training", "workshop",
+            "受講料", "受験料", "検定",
+        ],
+        "content": "教育研修費",
+    },
+    # ------------------------------------------------------------------
+    # 福利厚生費
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "福利厚生", "慶弔", "健康診断", "人間ドック",
+            "社員旅行", "懇親会", "忘年会", "新年会", "歓迎会", "送別会",
+            "社食", "社員食堂", "フィットネス", "スポーツクラブ",
+        ],
+        "content": "福利厚生費",
+    },
+    # ------------------------------------------------------------------
+    # クラウド・ソフトウェア利用料
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "openai", "chatgpt", "anthropic", "claude",
+            "aws", "amazon web services", "google cloud", "gcp",
+            "azure", "microsoft 365", "office 365",
+            "github", "gitlab", "bitbucket",
+            "salesforce", "hubspot", "freee", "マネーフォワード",
+            "弥生", "kintone", "cybozu", "notion", "figma",
+            "heroku", "cloudflare", "datadog", "twilio",
+            "subscription", "サブスクリプション", "ライセンス", "license",
+            "クラウド", "saas",
+        ],
+        "content": "クラウドサービス利用料",
+    },
+    # ------------------------------------------------------------------
+    # 郵便・運送費
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "郵便", "ゆうパック", "ゆうメール", "日本郵便", "japan post",
+            "ヤマト運輸", "クロネコ", "yamato", "佐川急便", "sagawa",
+            "fedex", "dhl", "ups", "delivery", "shipping",
+            "宅配", "配送", "送料", "運賃",
+        ],
+        "content": "荷造運賃",
+    },
+    # ------------------------------------------------------------------
+    # 支払手数料
+    # ------------------------------------------------------------------
+    {
+        "keywords": [
+            "振込手数料", "振込", "銀行手数料", "送金手数料",
+            "クレジット手数料", "決済手数料", "paypal", "stripe",
+            "手数料", "fee", "commission",
+        ],
+        "content": "支払手数料",
     },
 ]
 
@@ -426,8 +624,7 @@ def generate_description(info: dict, text: str) -> str:
     OCR抽出テキストと parse_document() の解析結果から経理入力用の摘要案を生成する。
 
     摘要形式:
-      取引先／内容／国内取引
-      取引先／内容／海外取引
+      取引先／内容／YYYYMM
 
     判定優先順位:
       1. vendor_rules.json のカスタムルール（存在する場合）
@@ -445,12 +642,11 @@ def generate_description(info: dict, text: str) -> str:
     Returns
     -------
     str
-        摘要案文字列（例: "Grab／交通費／海外取引"）
+        摘要案文字列（例: "Grab／交通費／202401"）
     """
-    company     = info.get("company") or "取引先不明"
-    doc_type    = info.get("doc_type") or ""
-    is_domestic = info.get("is_domestic", True)
-    lower_text  = text.lower()
+    company    = info.get("company") or "取引先不明"
+    doc_type   = info.get("doc_type") or ""
+    lower_text = text.lower()
 
     # 1. カスタムルール（vendor_rules.json）を優先
     vendor_rules = _load_vendor_rules()
@@ -460,36 +656,49 @@ def generate_description(info: dict, text: str) -> str:
     if not content:
         content = _match_rules(lower_text, _BUILTIN_RULES)
 
-    # 3. 書類種別フォールバック
+    # 3. キーワードが何もヒットしなければ「経費」に統一
     if not content:
-        if doc_type in ("請求書", "Invoice"):
-            content = "請求書"
-        elif doc_type in ("領収書", "Receipt"):
-            content = "経費"
-        else:
-            content = "経費"
+        content = "経費"
 
-    tax_hint = "国内取引" if is_domestic else "海外取引"
-    return f"{company}／{content}／{tax_hint}"
+    # 発行日から YYYYMM を取得（日付不明の場合は「不明」）
+    raw_date = info.get("date") or ""
+    if len(raw_date) == 8 and raw_date != "00000000":
+        yyyymm = raw_date[:6]   # "20240120" → "202401"
+    else:
+        yyyymm = "不明"
+
+    return f"{company}/{content}/{yyyymm}"
 
 
 # ========== メイン処理 ==========
 
-def process_file(file_path_str: str) -> tuple[bool, str]:
-    """1ファイルを処理してリネーム。(成功, メッセージ) を返す"""
+def process_file(file_path_str: str) -> dict:
+    """
+    1ファイルを処理してリネーム。結果を辞書で返す。
+
+    返却キー:
+      ok          : bool   処理成功かどうか
+      original    : str    元のファイル名
+      renamed     : str    リネーム後のファイル名（成功時のみ）
+      description : str    摘要案（成功時のみ）
+      error       : str    エラーメッセージ（失敗時のみ）
+    """
     file_path = Path(file_path_str)
+    base = {"original": file_path.name, "renamed": "", "description": "", "error": ""}
+
     if not file_path.exists():
-        return False, f"ファイルが見つかりません: {file_path}"
+        return {**base, "ok": False, "error": f"ファイルが見つかりません: {file_path}"}
 
     try:
         text = extract_text(file_path)
     except FileNotFoundError as e:
-        return False, str(e)
+        return {**base, "ok": False, "error": str(e)}
     except Exception as e:
-        return False, f"OCRエラー: {e}"
+        return {**base, "ok": False, "error": f"OCRエラー: {e}"}
 
     if not text.strip():
-        return False, "テキストを抽出できませんでした（画像が低解像度すぎる可能性があります）"
+        return {**base, "ok": False,
+                "error": "テキストを抽出できませんでした（画像が低解像度すぎる可能性があります）"}
 
     info        = parse_document(text)
     description = generate_description(info, text)
@@ -507,43 +716,173 @@ def process_file(file_path_str: str) -> tuple[bool, str]:
     try:
         file_path.rename(new_path)
     except Exception as e:
-        return False, f"リネーム失敗: {e}"
+        return {**base, "ok": False, "error": f"リネーム失敗: {e}"}
 
-    return True, f"{file_path.name}\n  → {new_path.name}\n  摘要案：{description}"
+    return {**base, "ok": True, "renamed": new_path.name, "description": description}
 
 
-def show_result_dialog(title: str, message: str):
-    """結果をWindowsダイアログで表示"""
+def show_result_dialog(results: list[dict]):
+    """
+    処理結果をカスタムウィンドウで表示する。
+    - リネーム前後のファイル名をプレビュー表示
+    - 摘要案はテキストエリアに表示してコピー可能
+    """
     try:
         import tkinter as tk
-        from tkinter import messagebox
+        from tkinter import ttk, font as tkfont
+
         root = tk.Tk()
-        root.withdraw()
-        messagebox.showinfo(title, message)
-        root.destroy()
-    except Exception:
-        print(f"{title}\n{message}")
+        root.title("証憑リネーム 処理結果")
+        root.resizable(True, True)
+
+        # ウィンドウサイズをファイル数に応じて調整（最大900x700）
+        win_h = min(200 + len(results) * 130, 700)
+        root.geometry(f"820x{win_h}")
+        root.minsize(640, 300)
+
+        FONT_LABEL  = ("Yu Gothic UI", 10)
+        FONT_BOLD   = ("Yu Gothic UI", 10, "bold")
+        FONT_MONO   = ("Consolas", 9)
+        COLOR_OK    = "#1a7a3c"
+        COLOR_ERR   = "#c0392b"
+        COLOR_MUTED = "#666666"
+        COLOR_BG    = "#f8f9fa"
+        COLOR_CARD  = "#ffffff"
+        COLOR_BORDER= "#dee2e6"
+
+        root.configure(bg=COLOR_BG)
+
+        # ---- ヘッダー ----
+        ok_count  = sum(1 for r in results if r["ok"])
+        err_count = len(results) - ok_count
+        header_text = f"✅ 完了 {ok_count}件"
+        if err_count:
+            header_text += f"　❌ エラー {err_count}件"
+
+        tk.Label(root, text="証憑リネーム 処理結果", font=("Yu Gothic UI", 13, "bold"),
+                 bg=COLOR_BG).pack(anchor="w", padx=20, pady=(16, 2))
+        tk.Label(root, text=header_text, font=FONT_LABEL, bg=COLOR_BG,
+                 fg=COLOR_OK if not err_count else COLOR_ERR).pack(anchor="w", padx=20, pady=(0, 10))
+
+        ttk.Separator(root, orient="horizontal").pack(fill="x", padx=20, pady=(0, 10))
+
+        # ---- スクロール可能なカードエリア ----
+        canvas = tk.Canvas(root, bg=COLOR_BG, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y", padx=(0, 8))
+        canvas.pack(side="left", fill="both", expand=True, padx=(20, 0))
+
+        frame = tk.Frame(canvas, bg=COLOR_BG)
+        canvas_window = canvas.create_window((0, 0), window=frame, anchor="nw")
+
+        def _on_frame_configure(e):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        def _on_canvas_configure(e):
+            canvas.itemconfig(canvas_window, width=e.width)
+
+        frame.bind("<Configure>", _on_frame_configure)
+        canvas.bind("<Configure>", _on_canvas_configure)
+
+        # マウスホイールスクロール
+        def _on_mousewheel(e):
+            canvas.yview_scroll(int(-1 * (e.delta / 120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        # ---- 各ファイルのカード ----
+        for r in results:
+            card = tk.Frame(frame, bg=COLOR_CARD, relief="flat",
+                            highlightbackground=COLOR_BORDER, highlightthickness=1)
+            card.pack(fill="x", pady=6, padx=4, ipady=10, ipadx=12)
+
+            if r["ok"]:
+                # ステータスバッジ
+                tk.Label(card, text="✅ リネーム完了", font=FONT_BOLD,
+                         fg=COLOR_OK, bg=COLOR_CARD).grid(row=0, column=0, sticky="w")
+
+                # 元ファイル名
+                tk.Label(card, text="変更前", font=FONT_LABEL, fg=COLOR_MUTED,
+                         bg=COLOR_CARD).grid(row=1, column=0, sticky="w", pady=(6, 0))
+                tk.Label(card, text=r["original"], font=FONT_MONO,
+                         bg=COLOR_CARD, wraplength=700, justify="left").grid(
+                             row=2, column=0, sticky="w")
+
+                # 矢印
+                tk.Label(card, text="　↓", font=FONT_LABEL, fg=COLOR_MUTED,
+                         bg=COLOR_CARD).grid(row=3, column=0, sticky="w")
+
+                # リネーム後ファイル名
+                tk.Label(card, text="変更後", font=FONT_LABEL, fg=COLOR_MUTED,
+                         bg=COLOR_CARD).grid(row=4, column=0, sticky="w")
+                tk.Label(card, text=r["renamed"], font=FONT_MONO, fg=COLOR_OK,
+                         bg=COLOR_CARD, wraplength=700, justify="left").grid(
+                             row=5, column=0, sticky="w")
+
+                # 摘要案ラベル＋コピーボタン
+                desc_row = tk.Frame(card, bg=COLOR_CARD)
+                desc_row.grid(row=6, column=0, sticky="ew", pady=(10, 0))
+
+                tk.Label(desc_row, text="摘要案", font=FONT_BOLD,
+                         bg=COLOR_CARD).pack(side="left")
+
+                def _make_copy(desc=r["description"]):
+                    root.clipboard_clear()
+                    root.clipboard_append(desc)
+
+                tk.Button(desc_row, text="📋 コピー", font=("Yu Gothic UI", 8),
+                          relief="flat", bg="#e8f0fe", fg="#1a73e8",
+                          padx=6, pady=2,
+                          command=_make_copy).pack(side="left", padx=(8, 0))
+
+                # 摘要テキストエリア（選択・コピー可能）
+                desc_text = tk.Text(card, font=FONT_MONO, height=1,
+                                    relief="flat", bg="#f0f4ff",
+                                    wrap="none", cursor="xterm")
+                desc_text.insert("1.0", r["description"])
+                desc_text.configure(state="normal")   # 選択可能・編集不可にしたい場合は"disabled"
+                desc_text.grid(row=7, column=0, sticky="ew", pady=(2, 0))
+                card.columnconfigure(0, weight=1)
+
+            else:
+                # エラーカード
+                tk.Label(card, text="❌ エラー", font=FONT_BOLD,
+                         fg=COLOR_ERR, bg=COLOR_CARD).grid(row=0, column=0, sticky="w")
+                tk.Label(card, text=r["original"], font=FONT_MONO,
+                         bg=COLOR_CARD).grid(row=1, column=0, sticky="w", pady=(4, 0))
+                tk.Label(card, text=r["error"], font=FONT_LABEL, fg=COLOR_ERR,
+                         bg=COLOR_CARD, wraplength=700, justify="left").grid(
+                             row=2, column=0, sticky="w", pady=(4, 0))
+                card.columnconfigure(0, weight=1)
+
+        # ---- 閉じるボタン ----
+        tk.Button(root, text="閉じる", command=root.destroy,
+                  font=FONT_LABEL, relief="flat", bg="#e0e0e0",
+                  padx=16, pady=6).pack(pady=16)
+
+        root.mainloop()
+
+    except Exception as e:
+        # tkinter が使えない環境ではコンソール出力にフォールバック
+        for r in results:
+            if r["ok"]:
+                print(f"✅ {r['original']} → {r['renamed']}")
+                print(f"   摘要案: {r['description']}")
+            else:
+                print(f"❌ {r['original']}: {r['error']}")
 
 
 def main():
     if len(sys.argv) < 2:
-        show_result_dialog("エラー", "ファイルを指定してください。\n右クリック→「証憑リネーム」から実行してください。")
+        show_result_dialog([{
+            "ok": False, "original": "", "renamed": "", "description": "",
+            "error": "ファイルを指定してください。\n右クリック→「証憑リネーム」から実行してください。"
+        }])
         return
 
     files = sys.argv[1:]
-    results, errors = [], []
-
-    for f in files:
-        ok, msg = process_file(f)
-        (results if ok else errors).append(msg if ok else f"{Path(f).name}: {msg}")
-
-    summary_parts = []
-    if results:
-        summary_parts.append(f"✅ リネーム完了 ({len(results)}件)\n\n" + "\n\n".join(results))
-    if errors:
-        summary_parts.append(f"❌ エラー ({len(errors)}件)\n\n" + "\n".join(errors))
-
-    show_result_dialog("証憑リネーム", "\n\n".join(summary_parts) or "処理対象がありません")
+    results = [process_file(f) for f in files]
+    show_result_dialog(results)
 
 
 if __name__ == "__main__":
