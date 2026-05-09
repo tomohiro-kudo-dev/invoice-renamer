@@ -104,6 +104,72 @@ https://www.python.org/ からダウンロード・インストール。
 
 ---
 
+## 摘要自動生成機能
+
+リネームと同時に、**経理入力用の摘要案**を自動生成します。  
+処理完了ダイアログに摘要案が表示されます。
+
+**出力形式:**
+```
+取引先／内容／国内取引
+取引先／内容／海外取引
+```
+
+**出力例:**
+```
+HYATT REGENCY KL MIDTOWN／宿泊費／海外取引
+Grab／交通費／海外取引
+OpenAI／クラウドサービス利用料／海外取引
+セブンイレブン／消耗品購入／国内取引
+```
+
+### 組み込みルール一覧
+
+OCRテキスト内のキーワードから内容を自動判定します。
+
+| 判定内容 | キーワード例 |
+|----------|-------------|
+| 宿泊費 | hotel, hyatt, hilton, inn, 宿泊, ホテル |
+| 交通費 | taxi, uber, grab, 交通, タクシー, airline, flight |
+| 飲食代 | restaurant, cafe, coffee, starbucks, 飲食, 食事 |
+| クラウドサービス利用料 | openai, aws, azure, google cloud, github, subscription |
+| 備品購入 | monitor, keyboard, mouse, pc, 備品, 消耗品 |
+| 教育研修費 | seminar, training, book, 書籍, セミナー, 研修 |
+| 広告宣伝費 | advertising, 広告, 宣伝, マーケティング |
+| 送料 | delivery, shipping, fedex, dhl, 配送, 送料 |
+| 請求書 | いずれも該当しない請求書・Invoice |
+| 経費 | 上記いずれにも該当しない場合 |
+
+### 摘要ルールのカスタマイズ（vendor_rules.json）
+
+独自のキーワードルールを追加したい場合は、スクリプトと同じフォルダに
+`vendor_rules.json` を作成してください。  
+組み込みルールより**優先的に**評価されます。
+
+**vendor_rules.json の書き方:**
+```json
+[
+  {
+    "keywords": ["acme", "acme corp"],
+    "content": "ソフトウェアライセンス料"
+  },
+  {
+    "keywords": ["cleaners", "cleaning service", "清掃"],
+    "content": "清掃費"
+  }
+]
+```
+
+| 項目 | 説明 |
+|------|------|
+| `keywords` | OCRテキスト内で検索するキーワード（小文字・大文字を区別しない） |
+| `content` | キーワードが見つかった場合に使用する摘要名 |
+
+- ファイルがない場合は組み込みルールのみで動作します（エラーにはなりません）
+- 複数のルールがある場合、リストの上から順に評価され、最初にヒットしたものが使われます
+
+---
+
 ## OCR精度について
 
 | 書類の状態 | 精度の目安 |
@@ -139,9 +205,10 @@ https://www.python.org/ からダウンロード・インストール。
 
 ```
 invoice_renamer_tesseract/
-├── rename_invoice.py  # メイン処理
+├── rename_invoice.py  # メイン処理（リネーム＋摘要生成）
 ├── setup.py           # セットアップ・右クリックメニュー登録
 ├── config.json        # パス設定（自動生成）
+├── vendor_rules.json  # カスタム摘要ルール（任意・手動作成）
 └── README.md          # このファイル
 ```
 
@@ -153,25 +220,3 @@ invoice_renamer_tesseract/
 - インターネット接続は一切使用しません
 - 書類データが外部サーバーに送信されることはありません
 - Google・Microsoft・OpenAI等のクラウドAPIは使用しません
-
----
-
-## ライセンス
-
-MIT License
-
-Copyright (c) 2026 Tomohiro Kudo
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
